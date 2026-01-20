@@ -1,17 +1,15 @@
----
-
 # 🧪 Crypto Lab (RSA‑2048 & AES‑256)
 
-> This repository demonstrates **how cryptography works**
-Encrypt & Decrypt (RSA / AES)
-Digital sign (RSA)
+> This repository demonstrates **how cryptography works**.
+Encrypt & Decrypt (RSA / AES),
+Digital sign (RSA),
 Signature verification (RSA)
 
 ---
 
 # 🧪 Toy Crypto Lab (RSA‑10 & AES‑4)
 
-> **Educational cryptography only — intentionally insecure**
+> **Educational cryptography only — intentionally insecure**.
 > This repository demonstrates **how cryptography could breaks** when parameters are too small.
 
 ---
