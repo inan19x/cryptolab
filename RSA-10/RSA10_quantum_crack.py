@@ -1,4 +1,4 @@
-# RSA10_Shors_Sim.py — Educational Shor Simulation for Toy RSA Breaking
+# RSA_quantum_crack.py — Educational Shor Simulation for Toy RSA Breaking
 from math import gcd
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
