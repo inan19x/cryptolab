@@ -27,7 +27,7 @@ By intentionally weakening cryptographic parameters, learners can:
 
 * Observe encryption and decryption step‑by‑step
 * Understand **why key size matters**
-* See **real cryptographic attacks** in action
+* See **real cryptographic attacks** in action (+ BONUS : with Shor Algorithm / Quantum attack)
 * Safely experiment without risking real systems :-)
 
 ---
