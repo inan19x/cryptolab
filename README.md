@@ -55,7 +55,8 @@ cryptolab/
 │   ├── RSA10_decrypt.py
 │   ├── RSA10_sign.py
 │   ├── RSA10_verify.py
-│   └── RSA10_crack.py
+│   ├── RSA10_crack.py
+│   └── RSA10_quantum_crack.py
 │
 ├── AES-4/
 │   ├── AES4_keygen.py
