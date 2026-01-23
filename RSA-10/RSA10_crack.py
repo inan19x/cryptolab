@@ -1,122 +1,147 @@
 # RSA_crack.py — TOY RSA BREAKER
 # EDUCATIONAL PURPOSES ONLY — INTENTIONALLY INSECURE
 
-from math import gcd
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+import time
 
-
-def load_public_key():
-    with open("public.key", "rb") as f:
-        public_key = serialization.load_pem_public_key(f.read())
-
-    numbers = public_key.public_numbers()
-    return numbers.e, numbers.n
-
-
-def factor_n_verbose(n):
+# ------------------------------------------------------------
+# Step 1: Factor n = p * q
+# ------------------------------------------------------------
+def factor_n(n):
+    """
+    VERY naive factorization with visible effort.
+    Pauses every iteration for teaching purposes.
+    """
     print("[*] Starting naive factorization of n...")
+    iterations = 0
+
     for i in range(2, n):
-        print(f"    [-] Trying i = {i} ... ", end="")
+        iterations += 1
+        print(f"    Attempt {iterations}: testing divisor i = {i}")
+        time.sleep(0.2)
+
         if n % i == 0:
-            print("SUCCESS")
+            print(f"\n[+] Factor found after {iterations} attempts!")
+            print(f"    n % {i} == 0")
             return i, n // i
-        else:
-            print("not a factor")
-    raise ValueError("Failed to factor n")
+
+    print(f"[-] No factors found after {iterations} attempts")
+    return None, None
 
 
-def modinv_verbose(e, phi):
-    print("[*] Searching for modular inverse d such that (e * d) mod φ(n) = 1")
+# ------------------------------------------------------------
+# Step 2: Find modular inverse d such that:
+#   d * e ≡ 1 (mod φ(n))
+# ------------------------------------------------------------
+def modinv(e, phi):
+    """
+    Brute-force modular inverse with visible iteration.
+    Pauses every attempt for teaching purposes.
+    """
+    print("[*] Searching for modular inverse d...")
+    print("    Trying values of d such that (d * e) mod φ(n) == 1\n")
+
     for d in range(1, phi):
-        print(f"    [-] Trying d = {d} ... ", end="")
-        if (e * d) % phi == 1:
-            print("FOUND")
+        result = (d * e) % phi
+        print(f"    Attempt d = {d}: ({d} * {e}) mod {phi} = {result}")
+        time.sleep(0.1)
+
+        if result == 1:
+            print(f"\n[+] Success! Modular inverse found.")
+            print(f"    d = {d}")
             return d
-        else:
-            print("no")
-    raise ValueError("No modular inverse found")
+
+    print("[-] No modular inverse found")
+    return None
 
 
-def decrypt_file(enc_file, d, n):
-    output_file = enc_file[:-4] if enc_file.endswith(".enc") else enc_file + ".dec"
+# ------------------------------------------------------------
+# MAIN PROGRAM
+# ------------------------------------------------------------
+print("=== RSA-10 bit Key Cracker ===")
 
-    with open(enc_file, "r") as f:
-        encrypted_numbers = f.read().split()
+# ---- Load public key ----
+pubkey_file = input("Enter public key file name (e.g., public.key): ")
 
-    decrypted_chars = []
+with open(pubkey_file, "rb") as f:
+    public_key = serialization.load_pem_public_key(f.read())
 
-    print("[*] Decrypting file using recovered private key...")
-    for c in encrypted_numbers:
-        m = pow(int(c), d, n)
-        decrypted_chars.append(chr(m))
+# Extract RSA public numbers
+numbers = public_key.public_numbers()
+n = numbers.n
+e = numbers.e
 
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write("".join(decrypted_chars))
+print("\n[+] Public key successfully loaded")
+print(f"    Modulus (n)  = {n}")
+print(f"    Exponent (e)= {e}")
 
-    print(f"[+] Decrypted file written to: {output_file}")
+# ---- Factor n ----
+print("\n=== STEP 1: Factoring n ===")
+p, q = factor_n(n)
 
+if not p:
+    print("[-] Could not factor n")
+    print("    (This usually means n is too large)")
+    exit(1)
 
-def save_cracked_private_key(p, q, e, d, n):
-    print("[*] Reconstructing real PKCS#1 private key...")
+print(f"[+] Prime factors recovered:")
+print(f"    p = {p}")
+print(f"    q = {q}")
+time.sleep(1)
 
-    dp = d % (p - 1)
-    dq = d % (q - 1)
-    qi = pow(q, -1, p)
+# ---- Compute φ(n) ----
+print("\n=== STEP 2: Computing Euler's Totient φ(n) ===")
+phi = (p - 1) * (q - 1)
 
-    private_numbers = rsa.RSAPrivateNumbers(
-        p=p,
-        q=q,
-        d=d,
-        dmp1=dp,
-        dmq1=dq,
-        iqmp=qi,
-        public_numbers=rsa.RSAPublicNumbers(e=e, n=n),
-    )
+print("φ(n) = (p - 1) * (q - 1)")
+print(f"φ(n) = ({p} - 1) * ({q} - 1)")
+print(f"φ(n) = {phi}")
 
-    private_key = private_numbers.private_key()
+# ---- Compute d ----
+print("\n=== STEP 3: Recovering Private Exponent d ===")
+print("We need d such that:")
+print("    d * e ≡ 1 (mod φ(n))")
 
-    pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,  # PKCS#1
-        encryption_algorithm=serialization.NoEncryption(),
-    )
+d = modinv(e, phi)
 
-    with open("cracked_private.key", "wb") as f:
-        f.write(pem)
+if not d:
+    print("[-] Failed to compute d")
+    exit(1)
 
-    print("[!] Cracked private key saved to: cracked_private.key")
+print("\n[+] Private exponent successfully recovered")
+print(f"    d = {d}")
+time.sleep(1)
 
+# ---- Reconstruct private key ----
+print("\n=== STEP 4: Reconstructing RSA Private Key ===")
 
-def main():
-    print("=== TOY RSA CRACK DEMO ===")
+private_numbers = rsa.RSAPrivateNumbers(
+    p=p,
+    q=q,
+    d=d,
+    dmp1=d % (p - 1),
+    dmq1=d % (q - 1),
+    iqmp=pow(q, -1, p),
+    public_numbers=rsa.RSAPublicNumbers(e, n)
+)
 
-    e, n = load_public_key()
-    print(f"[+] Loaded public key: e={e}, n={n}")
+private_key = private_numbers.private_key()
+time.sleep(2)
+print("[+] RSA private key object created")
 
-    enc_file = input("Enter encrypted file name (e.g. message.txt.enc): ")
+# ---- Serialize and save key ----
+print("\n=== STEP 5: Saving Private Key to Disk ===")
 
-    # Step 1: Factor n
-    p, q = factor_n_verbose(n)
-    print(f"[+] Found factors: p={p}, q={q}")
+pem = private_key.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.TraditionalOpenSSL,
+    encryption_algorithm=serialization.NoEncryption()
+)
 
-    # Step 2: Compute φ(n)
-    phi = (p - 1) * (q - 1)
-    print(f"[+] Computed φ(n) = {phi}")
+with open("cracked_private.key", "wb") as f:
+    f.write(pem)
 
-    # Step 3: Recover private key
-    d = modinv_verbose(e, phi)
-    print(f"[+] Recovered private key exponent d={d}")
-
-    # Step 4: Save real PEM private key
-    save_cracked_private_key(p, q, e, d, n)
-
-    # Step 5: Decrypt file
-    decrypt_file(enc_file, d, n)
-
-    print("\n[!] RSA successfully broken — small keys are insecure.")
-
-
-if __name__ == "__main__":
-    main()
+print("[+] Private key written to: cracked_private.key")
+print("\n=== DONE ===")
 

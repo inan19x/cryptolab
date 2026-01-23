@@ -1,25 +1,26 @@
 # RSA_decrypt.py — TOY RSA FILE DECRYPTION (EDUCATIONAL ONLY)
+
 import os
 from cryptography.hazmat.primitives import serialization
 
-
 def load_private_key():
     """
-    Load OpenSSL-compatible PEM private key
+    Load OpenSSL-compatible PEM private key.
     Returns (d, n) integers for toy RSA
     """
-    with open("private.key", "rb") as f:
-        private_key = serialization.load_pem_private_key(f.read(), password=None)
+    # Prompt user for private key file
+    privkey_file = input("Enter private key file name (e.g., private.key): ")
 
+    with open(privkey_file, "rb") as f:
+        private_key = serialization.load_pem_private_key(f.read(), password=None)
+    
     numbers = private_key.private_numbers()
     return numbers.d, numbers.public_numbers.n
-
 
 def main():
     d, n = load_private_key()
 
     input_file = input("Enter encrypted file name (e.g. message.txt.enc): ")
-
     if not input_file.endswith(".enc"):
         raise ValueError("Encrypted file must have a .enc extension")
 
@@ -30,7 +31,6 @@ def main():
         encrypted_numbers = f.read().split()
 
     decrypted_chars = []
-
     for c in encrypted_numbers:
         m = pow(int(c), d, n)
         decrypted_chars.append(chr(m))
@@ -44,7 +44,6 @@ def main():
 
     print(f"[+] File decrypted successfully → {output_file}")
     print(f"[i] Encrypted file '{input_file}' has been deleted.")
-
 
 if __name__ == "__main__":
     main()

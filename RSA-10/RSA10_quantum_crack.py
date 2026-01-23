@@ -1,4 +1,6 @@
 # RSA_quantum_crack.py — Educational Shor Simulation for Toy RSA Breaking
+# EDUCATIONAL PURPOSES ONLY — INTENTIONALLY INSECURE
+
 from math import gcd
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
@@ -6,8 +8,21 @@ import random
 
 # Load the small RSA public key
 def load_public_key():
-    with open("public.key", "rb") as f:
-        public_key = serialization.load_pem_public_key(f.read())
+    # Prompt the user for the public key file path
+    key_file = input("Enter the public key filename (e.g., public.key): ").strip()
+
+    # Try to open and load the key
+    try:
+        with open(key_file, "rb") as f:
+            public_key = serialization.load_pem_public_key(f.read())
+    except FileNotFoundError:
+        print(f"[!] File not found: {key_file}")
+        return load_public_key()  # ask again
+    except Exception as e:
+        print(f"[!] Unable to load public key: {e}")
+        return load_public_key()  # ask again
+
+    # Extract and return (e, n)
     numbers = public_key.public_numbers()
     return numbers.e, numbers.n
 
